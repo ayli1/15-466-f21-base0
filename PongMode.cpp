@@ -137,6 +137,7 @@ void PongMode::update(float elapsed) {
 
 	//----- paddle update -----
 
+	/*
 	{ //right player ai:
 		ai_offset_update -= elapsed;
 		if (ai_offset_update < elapsed) {
@@ -149,11 +150,11 @@ void PongMode::update(float elapsed) {
 		} else {
 			right_paddle.y = std::max(ball.y + ai_offset, right_paddle.y - 2.0f * elapsed);
 		}
-	}
+	} */
 
 	//clamp paddles to court:
-	right_paddle.y = std::max(right_paddle.y, -court_radius.y + paddle_radius.y);
-	right_paddle.y = std::min(right_paddle.y,  court_radius.y - paddle_radius.y);
+	//right_paddle.y = std::max(right_paddle.y, -court_radius.y + paddle_radius.y);
+	//right_paddle.y = std::min(right_paddle.y,  court_radius.y - paddle_radius.y);
 
 	left_paddle.y = std::max(left_paddle.y, -court_radius.y + paddle_radius.y);
 	left_paddle.y = std::min(left_paddle.y,  court_radius.y - paddle_radius.y);
@@ -161,10 +162,11 @@ void PongMode::update(float elapsed) {
 	//----- ball update -----
 
 	//speed of ball doubles every four points:
-	float speed_multiplier = 4.0f * std::pow(2.0f, (left_score + right_score) / 4.0f);
+	//float speed_multiplier = 4.0f * std::pow(2.0f, (left_score + right_score) / 4.0f);
+	float speed_multiplier = 4.0f;
 
 	//velocity cap, though (otherwise ball can pass through paddles):
-	speed_multiplier = std::min(speed_multiplier, 10.0f);
+	//speed_multiplier = std::min(speed_multiplier, 10.0f);
 
 	ball += elapsed * speed_multiplier * ball_velocity;
 
@@ -203,7 +205,21 @@ void PongMode::update(float elapsed) {
 		}
 	};
 	paddle_vs_ball(left_paddle);
-	paddle_vs_ball(right_paddle);
+	//paddle_vs_ball(right_paddle);
+
+	//targets:
+	auto ball_vs_target = [this](glm::vec2 const& target) {
+		//compute area of overlap:
+		glm::vec2 min = glm::max(target - target_radius, ball - ball_radius);
+		glm::vec2 max = glm::min(target + target_radius, ball + ball_radius);
+
+		//if no overlap, no collision:
+		if (min.x > max.x || min.y > max.y) return;
+		else {
+			target_hit = true; //TODO: manage for each target
+		}
+	};
+	ball_vs_target(target); //TODO: put this in a loop that calls this on all targets
 
 	//court walls:
 	if (ball.y > court_radius.y - ball_radius.y) {
@@ -219,18 +235,26 @@ void PongMode::update(float elapsed) {
 		}
 	}
 
+	if (target_hit) { //TODO: only increment score if ALL targets on this level have been hit
+		left_score = 1; //TODO: properly increment score lol
+	}
+	else {
+		left_score = 0;
+	}
+	
 	if (ball.x > court_radius.x - ball_radius.x) {
 		ball.x = court_radius.x - ball_radius.x;
 		if (ball_velocity.x > 0.0f) {
 			ball_velocity.x = -ball_velocity.x;
-			left_score += 1;
+			//left_score += 1;
 		}
 	}
+	
 	if (ball.x < -court_radius.x + ball_radius.x) {
 		ball.x = -court_radius.x + ball_radius.x;
 		if (ball_velocity.x < 0.0f) {
 			ball_velocity.x = -ball_velocity.x;
-			right_score += 1;
+			//right_score += 1;
 		}
 	}
 
@@ -294,8 +318,11 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	draw_rectangle(glm::vec2( 0.0f,-court_radius.y-wall_radius)+s, glm::vec2(court_radius.x, wall_radius), shadow_color);
 	draw_rectangle(glm::vec2( 0.0f, court_radius.y+wall_radius)+s, glm::vec2(court_radius.x, wall_radius), shadow_color);
 	draw_rectangle(left_paddle+s, paddle_radius, shadow_color);
-	draw_rectangle(right_paddle+s, paddle_radius, shadow_color);
+	//draw_rectangle(right_paddle+s, paddle_radius, shadow_color);
 	draw_rectangle(ball+s, ball_radius, shadow_color);
+	if (!target_hit) { //TODO: manage for each target
+		draw_rectangle(target + s, target_radius, shadow_color);
+	}
 
 	//ball's trail:
 	if (ball_trail.size() >= 2) {
@@ -351,20 +378,25 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 
 	//paddles:
 	draw_rectangle(left_paddle, paddle_radius, fg_color);
-	draw_rectangle(right_paddle, paddle_radius, fg_color);
+	//draw_rectangle(right_paddle, paddle_radius, fg_color);
 	
-
 	//ball:
 	draw_rectangle(ball, ball_radius, fg_color);
+
+	//target:
+	if (!target_hit) { //TODO: manage for each target
+		draw_rectangle(target, target_radius, fg_color);
+	}
 
 	//scores:
 	glm::vec2 score_radius = glm::vec2(0.1f, 0.1f);
 	for (uint32_t i = 0; i < left_score; ++i) {
 		draw_rectangle(glm::vec2( -court_radius.x + (2.0f + 3.0f * i) * score_radius.x, court_radius.y + 2.0f * wall_radius + 2.0f * score_radius.y), score_radius, fg_color);
 	}
+	/*
 	for (uint32_t i = 0; i < right_score; ++i) {
 		draw_rectangle(glm::vec2( court_radius.x - (2.0f + 3.0f * i) * score_radius.x, court_radius.y + 2.0f * wall_radius + 2.0f * score_radius.y), score_radius, fg_color);
-	}
+	}*/
 
 
 
