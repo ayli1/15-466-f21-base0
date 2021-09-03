@@ -12,6 +12,11 @@
  * PongMode is a game mode that implements a single-player game of Pong.
  */
 
+struct target_info {
+	glm::vec2 target;
+	bool target_good; // Is the target good or bad? (If bad, when hit, game resets)
+};
+
 struct PongMode : Mode {
 	PongMode();
 	virtual ~PongMode();
@@ -34,8 +39,10 @@ struct PongMode : Mode {
 	glm::vec2 ball = glm::vec2(0.0f, 0.0f);
 	glm::vec2 ball_velocity = glm::vec2(-1.0f, 0.0f);
 
-	glm::vec2 target = glm::vec2(0.3f, 0.3f);
-	bool target_hit = false; //TODO: one for each target
+	//glm::vec2 target = glm::vec2(court_radius.x - 1.1f, 0.0f);
+	//bool target_hit = false; //TODO: one for each target
+	std::vector<target_info *> targets; // Vector of all the targets in the given level
+	int level = 1; // Game level (the higher the level, the greater the more targets)
 
 	uint32_t left_score = 0;
 	//uint32_t right_score = 0;

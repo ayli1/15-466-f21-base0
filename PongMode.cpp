@@ -208,18 +208,44 @@ void PongMode::update(float elapsed) {
 	//paddle_vs_ball(right_paddle);
 
 	//targets:
-	auto ball_vs_target = [this](glm::vec2 const& target) {
+	if (targets.empty()) {
+		level++;
+		// Randomly generate targets and add to targets vector
+		for (int i = 0; i < level; i++) {
+			target_info *new_target = new target_info;
+			float court_x = court_radius.x;
+			// TODO: can't mod by a float... find another way to get a random num in a set range
+			std::random_device rd;  // Get random number
+			std::mt19937 gen(rd()); // Seed the generator
+			std::uniform_real_distribution<float> distr_x(-court_radius.x + target_radius.x, court_radius.x - target_radius.x);
+			std::uniform_real_distribution<float> distr_y(-court_radius.y + target_radius.y, court_radius.y - target_radius.y);
+
+			float target_x = distr_x(gen);
+			float target_y = distr_y(gen);
+
+			// Check if overlaps with any other targets in for loop
+			new_target->target = glm::vec2(target_x, target_y); // TODO
+			new_target->target_good = true;
+			targets.push_back(new_target);
+		}
+	}
+	auto ball_vs_target = [this](int targets_index) {
+		target_info* ti = targets[targets_index];
+
 		//compute area of overlap:
-		glm::vec2 min = glm::max(target - target_radius, ball - ball_radius);
-		glm::vec2 max = glm::min(target + target_radius, ball + ball_radius);
+		glm::vec2 min = glm::max(ti->target - target_radius, ball - ball_radius);
+		glm::vec2 max = glm::min(ti->target + target_radius, ball + ball_radius);
 
 		//if no overlap, no collision:
 		if (min.x > max.x || min.y > max.y) return;
 		else {
-			target_hit = true; //TODO: manage for each target
+			targets.erase(targets.begin() + targets_index); // Code from https://www.cplusplus.com/reference/vector/vector/erase/
 		}
 	};
-	ball_vs_target(target); //TODO: put this in a loop that calls this on all targets
+
+	for (int targets_index = 0; targets_index < targets.size(); targets_index++) {
+		ball_vs_target(targets_index);
+	}
 
 	//court walls:
 	if (ball.y > court_radius.y - ball_radius.y) {
@@ -235,12 +261,7 @@ void PongMode::update(float elapsed) {
 		}
 	}
 
-	if (target_hit) { //TODO: only increment score if ALL targets on this level have been hit
-		left_score = 1; //TODO: properly increment score lol
-	}
-	else {
-		left_score = 0;
-	}
+	left_score = level - 1;
 	
 	if (ball.x > court_radius.x - ball_radius.x) {
 		ball.x = court_radius.x - ball_radius.x;
@@ -320,8 +341,8 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	draw_rectangle(left_paddle+s, paddle_radius, shadow_color);
 	//draw_rectangle(right_paddle+s, paddle_radius, shadow_color);
 	draw_rectangle(ball+s, ball_radius, shadow_color);
-	if (!target_hit) { //TODO: manage for each target
-		draw_rectangle(target + s, target_radius, shadow_color);
+	for (target_info* ti : targets) {
+		draw_rectangle(ti->target + s, target_radius, shadow_color);
 	}
 
 	//ball's trail:
@@ -384,8 +405,8 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	draw_rectangle(ball, ball_radius, fg_color);
 
 	//target:
-	if (!target_hit) { //TODO: manage for each target
-		draw_rectangle(target, target_radius, fg_color);
+	for (target_info* ti : targets) {
+		draw_rectangle(ti->target, target_radius, fg_color);
 	}
 
 	//scores:
