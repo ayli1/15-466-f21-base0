@@ -208,6 +208,9 @@ void PongMode::update(float elapsed) {
 	//paddle_vs_ball(right_paddle);
 
 	//targets:
+	// When the level has restarted (because the player hit a bad target) OR the player
+	// is advancing to the next level, all targets will be wiped before looping back to
+	// this point
 	if (targets.empty()) {
 		level++;
 		// Randomly generate targets and add to targets vector
@@ -220,6 +223,7 @@ void PongMode::update(float elapsed) {
 			std::uniform_real_distribution<float> distr_x(-court_radius.x + target_radius.x, court_radius.x - target_radius.x);
 			std::uniform_real_distribution<float> distr_y(-court_radius.y + target_radius.y, court_radius.y - target_radius.y);
 
+			// New randomly generated target coordinates
 			float target_x = distr_x(gen);
 			float target_y = distr_y(gen);
 
@@ -238,7 +242,15 @@ void PongMode::update(float elapsed) {
 			}
 
 			new_target->target = glm::vec2(target_x, target_y);
-			new_target->target_good = true;
+
+			// After Level 3, 1/3 of targets are bad targets
+			if ((level > 3) && (i > (0.66f * (float)level))) {
+				new_target->target_good = false;
+			}
+			else {
+				new_target->target_good = true;
+			}
+
 			targets.push_back(new_target);
 		}
 	}
@@ -252,12 +264,34 @@ void PongMode::update(float elapsed) {
 		//if no overlap, no collision:
 		if (min.x > max.x || min.y > max.y) return;
 		else {
-			targets.erase(targets.begin() + targets_index); // Code from https://www.cplusplus.com/reference/vector/vector/erase/
+			if (targets[targets_index]->target_good) {
+				targets.erase(targets.begin() + targets_index); // Code from https://www.cplusplus.com/reference/vector/vector/erase/
+			}
+			else {
+				targets.clear();
+				level--;
+			}
 		}
 	};
 
 	for (int targets_index = 0; targets_index < targets.size(); targets_index++) {
 		ball_vs_target(targets_index);
+		if (targets.empty()) {
+			break;
+		}
+	}
+
+	// If only bad targets remain, i.e., all the good targets have been hit, clear
+	// targets vector and advance to next level
+	if (!targets.empty()) {
+		for (target_info *ti : targets) {
+			if (ti->target_good) {
+				break;
+			}
+			else {
+				targets.clear();
+			}
+		}
 	}
 
 	//court walls:
@@ -314,6 +348,8 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	const glm::u8vec4 bg_color = HEX_TO_U8VEC4(0x193b59ff);
 	const glm::u8vec4 fg_color = HEX_TO_U8VEC4(0xf2d2b6ff);
 	const glm::u8vec4 shadow_color = HEX_TO_U8VEC4(0xf2ad94ff);
+	const glm::u8vec4 bad_color = HEX_TO_U8VEC4(0x80756bff); // Color of a bad target
+	const glm::u8vec4 bad_shadow_color = HEX_TO_U8VEC4(0x524c48ff); // Color of a bad target's shadow
 	const std::vector< glm::u8vec4 > trail_colors = {
 		HEX_TO_U8VEC4(0xf2ad9488),
 		HEX_TO_U8VEC4(0xf2897288),
@@ -355,7 +391,12 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	//draw_rectangle(right_paddle+s, paddle_radius, shadow_color);
 	draw_rectangle(ball+s, ball_radius, shadow_color);
 	for (target_info* ti : targets) {
-		draw_rectangle(ti->target + s, target_radius, shadow_color);
+		if (ti->target_good) {
+			draw_rectangle(ti->target + s, target_radius, shadow_color);
+		}
+		else {
+			draw_rectangle(ti->target + s, target_radius, bad_shadow_color);
+		}
 	}
 
 	//ball's trail:
@@ -419,7 +460,12 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 
 	//target:
 	for (target_info* ti : targets) {
-		draw_rectangle(ti->target, target_radius, fg_color);
+		if (ti->target_good) {
+			draw_rectangle(ti->target, target_radius, fg_color);
+		}
+		else {
+			draw_rectangle(ti->target, target_radius, bad_color);
+		}
 	}
 
 	//scores:
