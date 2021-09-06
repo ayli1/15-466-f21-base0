@@ -273,7 +273,7 @@ void PongMode::update(float elapsed) {
 		if (min.x > max.x || min.y > max.y) return;
 		else {
 			if (targets[targets_index]->target_good) {
-				targets.erase(targets.begin() + targets_index); // Code from https://www.cplusplus.com/reference/vector/vector/erase/
+				targets.erase(targets.begin() + targets_index);
 			}
 			else {
 				targets.clear();
