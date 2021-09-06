@@ -220,8 +220,8 @@ void PongMode::update(float elapsed) {
 			// Reference for getting a random number within a range: https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
 			std::random_device rd;  // Get random number
 			std::mt19937 gen(rd()); // Seed the generator
-			std::uniform_real_distribution<float> distr_x(-court_radius.x + target_radius.x, court_radius.x - target_radius.x);
-			std::uniform_real_distribution<float> distr_y(-court_radius.y + target_radius.y, court_radius.y - target_radius.y);
+			std::uniform_real_distribution<float> distr_x(-court_radius.x + good_target_radius.x, court_radius.x - good_target_radius.x);
+			std::uniform_real_distribution<float> distr_y(-court_radius.y + good_target_radius.y, court_radius.y - good_target_radius.y);
 
 			// New randomly generated target coordinates
 			float target_x = distr_x(gen);
@@ -258,6 +258,14 @@ void PongMode::update(float elapsed) {
 		target_info* ti = targets[targets_index];
 
 		//compute area of overlap:
+		glm::vec2 target_radius;
+		if (ti->target_good) {
+			target_radius = good_target_radius;
+		}
+		else {
+			target_radius = bad_target_radius;
+		}
+
 		glm::vec2 min = glm::max(ti->target - target_radius, ball - ball_radius);
 		glm::vec2 max = glm::min(ti->target + target_radius, ball + ball_radius);
 
@@ -392,10 +400,10 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	draw_rectangle(ball+s, ball_radius, shadow_color);
 	for (target_info* ti : targets) {
 		if (ti->target_good) {
-			draw_rectangle(ti->target + s, target_radius, shadow_color);
+			draw_rectangle(ti->target + s, good_target_radius, shadow_color);
 		}
 		else {
-			draw_rectangle(ti->target + s, target_radius, bad_shadow_color);
+			draw_rectangle(ti->target + s, bad_target_radius, bad_shadow_color);
 		}
 	}
 
@@ -461,10 +469,10 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	//target:
 	for (target_info* ti : targets) {
 		if (ti->target_good) {
-			draw_rectangle(ti->target, target_radius, fg_color);
+			draw_rectangle(ti->target, good_target_radius, fg_color);
 		}
 		else {
-			draw_rectangle(ti->target, target_radius, bad_color);
+			draw_rectangle(ti->target, bad_target_radius, bad_color);
 		}
 	}
 
