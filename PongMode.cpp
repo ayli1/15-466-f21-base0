@@ -214,7 +214,7 @@ void PongMode::update(float elapsed) {
 		for (int i = 0; i < level; i++) {
 			target_info *new_target = new target_info;
 			float court_x = court_radius.x;
-			// TODO: can't mod by a float... find another way to get a random num in a set range
+			// Reference for getting a random number within a range: https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
 			std::random_device rd;  // Get random number
 			std::mt19937 gen(rd()); // Seed the generator
 			std::uniform_real_distribution<float> distr_x(-court_radius.x + target_radius.x, court_radius.x - target_radius.x);
@@ -223,8 +223,21 @@ void PongMode::update(float elapsed) {
 			float target_x = distr_x(gen);
 			float target_y = distr_y(gen);
 
-			// Check if overlaps with any other targets in for loop
-			new_target->target = glm::vec2(target_x, target_y); // TODO
+			bool spaced = false;
+
+			// If this new target position is too close to another, try another position
+			while (!spaced) {
+				for (target_info* ti : targets) {
+					if (glm::distance(glm::vec2(target_x, target_y), ti->target) < 0.6) {
+						target_x = distr_x(gen);
+						target_y = distr_y(gen);
+						break;
+					}
+				}
+				spaced = true;
+			}
+
+			new_target->target = glm::vec2(target_x, target_y);
 			new_target->target_good = true;
 			targets.push_back(new_target);
 		}

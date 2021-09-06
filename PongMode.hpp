@@ -42,7 +42,7 @@ struct PongMode : Mode {
 	//glm::vec2 target = glm::vec2(court_radius.x - 1.1f, 0.0f);
 	//bool target_hit = false; //TODO: one for each target
 	std::vector<target_info *> targets; // Vector of all the targets in the given level
-	int level = 1; // Game level (the higher the level, the greater the more targets)
+	int level = 0; // Game level (the higher the level, the greater the more targets)
 
 	uint32_t left_score = 0;
 	//uint32_t right_score = 0;
