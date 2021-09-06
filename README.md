@@ -10,7 +10,7 @@ Screen Shot:
 
 How To Play:
 
-The object of the game is to bounce the ball through all the light-colored targets in each level; once you do, you advance to the next level. But beware of the little dark-colored targets! Hit one of those, and you'll have to restart the level. The higher the level, the more targets there are -- both good and bad.
+The object of the game is to bounce the ball through all the light-colored targets in each level; once you do, you advance to the next level. But beware of the little dark-colored targets that start appearing after Level 3! Hit one of those, and you'll have to restart the level. The higher the level, the more targets there are -- both good and bad.
 Use your mouse to move the left paddle up or down. The ball can also bounce off of any of the four walls.
 
 Sources:
